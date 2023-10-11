@@ -11,10 +11,10 @@ async function makeGraphqlPostRequest() {
     const config = {
         method: 'post',
         headers: {
-            Authorization: "bearer " + "-267nZ1EStB9zHq6Uiejd95nTOc",
+            Authorization: "bearer " + "1HfRj8iYOun70Kd2yGQ750kQI_c",
         }
     }
-    const ids = ["901-1-MAC_1031395"];
+    const ids = ["310-1-SSB_1031220","155-1-SSB_1031221","130-1-SSB_1031223","901-1-MAC_1031227","901-1-MAC_1031228","901-1-MAC_1031231","122-1-SSB_1031232","901-1-MAC_1031233","901-1-CL_1031234","912-1-SSB_1031236","901-1-MAC_1031240","901-1-MAC_1031239","901-1-CL_1031242","901-1-MAC_1031244","110-1-SSB_1031249","902-1-SSB_1031252","901-1-BB_1031255","901-1-MAC_1031258","901-1-MAC_1031259","112-1-SSB_1031266","147-2-SSB_1031138","294-1-SSB_1031274","294-1-SSB_1031276"];
     const results = [];
     for (const id of ids) {
         const graphqlQuery = queryFunction(id)
