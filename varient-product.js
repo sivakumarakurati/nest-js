@@ -1,34 +1,34 @@
 const axios = require('axios');
 const fs = require('fs'); // Import the fs module
-async function makeGraphqlPostRequest(){
-const apiUrl = 'https://shoppersstop.api.fluentretail.com/graphql'
-const config = {
-    method: 'post',
-    headers: {
-        Authorization: "bearer " + "3ezEQZKhVhCH7SBbaE8rt20WBps",
-    }
-}
-const ids = ["MAC-SYP811","MAC-SYP812","MAC-SYP813","MAC-SYP814","MAC-SYP815","MAC-SYP816","MAC-SYP817","MAC-SYP818","MAC-SYP819","MAC-SYP820","MAC-SYP821","MAC-SYP822","MAC-SYP834","MAC-SYP835","MAC-SYP836","MAC-SYP841","MAC-SYP843","MAC-SYP844"]
-const results = [];
-for (const id of ids) {
-    const graphqlQuery = queryFunction(id)
-    {
-        try {
-            const response = await axios.post(apiUrl, { query: graphqlQuery }, config);
-            results.push(response.data);
-            console.log("processing... ", id)
-            // console.log(response?.data)
-            const fileName = `StandardProducts.json`;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await fs.promises.appendFile(fileName, JSON.stringify(response.data) + '\n');
-         } catch (error) {
-            console.error('Error:', error.response ? error.response.data : error.message);
+async function makeGraphqlPostRequest() {
+    const apiUrl = 'https://shoppersstop.api.fluentretail.com/graphql'
+    const config = {
+        method: 'post',
+        headers: {
+            Authorization: "bearer " + "3ezEQZKhVhCH7SBbaE8rt20WBps",
         }
-        
     }
-    const fileName = `varientProducts.json`;
-    await fs.promises.writeFile(fileName, JSON.stringify(results, null, 2));
-   }
+    const ids = [];
+    const results = [];
+    for (const id of ids) {
+        const graphqlQuery = queryFunction(id)
+        {
+            try {
+                const response = await axios.post(apiUrl, { query: graphqlQuery }, config);
+                results.push(response.data);
+                console.log("processing... ", id)
+                // console.log(response?.data)
+                const fileName = `StandardProducts.json`;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await fs.promises.appendFile(fileName, JSON.stringify(response.data) + '\n');
+            } catch (error) {
+                console.error('Error:', error.response ? error.response.data : error.message);
+            }
+
+        }
+        const fileName = `varientProducts.json`;
+        await fs.promises.writeFile(fileName, JSON.stringify(results, null, 2));
+    }
 }
 function queryFunction(id) {
     const graphqlQuery = `
