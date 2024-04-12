@@ -5,10 +5,10 @@ async function makeGraphqlPostRequest() {
   const config = {
     method: 'post',
     headers: {
-      Authorization: "bearer " + "ueVJjvyiDeVVXul94GsdqrNtNRQ",
+      Authorization: "bearer " + "mAQj3DQr53VAbg885dvpSZNqa-g",
     }
   }
-  const ids = ["EL-PR2H40", "EL-PMWE010", "FREL-G34H02", "FREL-GXCT01", "FREL-PN0L15", "FREL-WPF101", "FREL-PR2H01", "FREL-PR2J01", "FREL-PTLH01", "EL-PMWE010", "FRCL-KTJM01", "FRCL-KTJM02", "FRCL-KTJM03", "FRCL-KTJM05", "FRCL-KTJM06", "FRCL-KTJM07", "MAC-MCIN88", "MAC-MCIN86", "MAC-MCIN87", "MAC-MCIN80", "MAC-MCIN77", "BB-BBIN22", "BB-BBIN23"];
+  const ids = ["7166448","203460498","6521124","206319261","203511673","6909736"];
   const results = [];
   for (const id of ids) {
     const graphqlQuery = queryFunction(id)
@@ -17,10 +17,19 @@ async function makeGraphqlPostRequest() {
         const response = await axios.post(apiUrl, { query: graphqlQuery }, config);
         results.push(response.data);
         console.log("processing... ", id)
-        // console.log(response?.data)
-        const fileName = `product-inventory.json`;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await fs.promises.appendFile(fileName, JSON.stringify(response.data) + '\n');
+        /* for (const edgeData of virtualPositionRes.data.virtualPositions.edges) {
+          const productRef = edgeData.node.productRef;
+          const locationRef = edgeData.node.groupRef;
+          const quantity = edgeData.node.quantity;
+          const graphqlQuery1 = queryFunction1(locationRef);
+          const response1 = await axios.post(apiUrl, { query: graphqlQuery1 }, config);
+          const locationRes = response1.data
+          const locationStatus = locationRes.data.location.status;
+          if (quantity >= 1 && locationStatus == 'ACTIVE') {
+            console.log(productRef + " :: " + locationRef + "(" + locationStatus + ") = " + quantity);
+            break;
+          }
+        } */
       } catch (error) {
         console.error('Error:', error.response ? error.response.data : error.message);
       }
@@ -33,21 +42,31 @@ async function makeGraphqlPostRequest() {
 function queryFunction(id) {
   const graphqlQuery = `
     query {
-        inventoryCatalogue(ref: "DEFAULT:1") {
-          ref
-          inventoryPositions(productRef: "${id}") {
+      virtualPositions(first: 100, productRef: "${id}") {
             edges {
               node {
-                id
-                ref
-                type
+                productRef
+                groupRef
+                quantity
                 status
-                onHand
               }
             }
           }
-        }
       }
+      `
+  return graphqlQuery;
+}
+function queryFunction1(id) {
+  const graphqlQuery = `
+  query{
+    location(ref: "${id}") {
+        primaryAddress {
+            id
+        }
+        ref
+        status
+    }
+}
       `
   return graphqlQuery;
 }
