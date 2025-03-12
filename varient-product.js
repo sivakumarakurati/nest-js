@@ -1,52 +1,118 @@
 const axios = require('axios');
-const fs = require('fs'); // Import the fs module
+const fs = require('fs');
 async function makeGraphqlPostRequest() {
     const apiUrl = 'https://shoppersstop.api.fluentretail.com/graphql'
     const config = {
         method: 'post',
         headers: {
-            Authorization: "bearer " + "lxFp0lUQfPjPCRvYD3rbV_AYSyM",
+            Authorization: "bearer " + "Ph1jToSb8gMQckVIEU-FdQYROJA",
         }
     }
-    const ids = ["S23BTR076435016","S23BTR076435023","S23BTR076441727","S23BTR076451269","S23BTR076451276","S23BTR076451283","S23BTR076451290","S23BTR076451313","S23BTR076451337","S23BTR076451344","S23BTR076451351","S23BTR076451375","S23BTR076451382","S23BTR076451405","S23BTR076454321","S23BTR076454345","S23BTR076454352","S23BTR076454369","S23BTR076454451","S23BTR076454468","S23BTR076454475","S23BTR076454482","S23BTR076454499","S23BTR076454505","S23BTR076454512","S23BTR076456028","S23BTR076456035","S23BTR076456042","S23BTR076456059","S23BTR076456066","S23BTR076456073","S23BTR076456080","S23BTR076456097","S23BTR076456103","S23BTR076456110","S23BTR076456127","S23BTR076456134","S23BTR076456141","S23BTR076456158","S23BTR076456455","S23BTR076457087","S23BTR076457223","S23BTR076457230","S23BTR076457247","S23BTR076457261","S23BTR076457285","S23BTR076457889","S23BTR076458015","S23BTR076458022","S23BTR076458039","S23BTR076458046","S23BTR076458053","S23BTR076458060","S23BTR076458275","S23BTR076458282"];
     const results = [];
-    for (const id of ids) {
-        const graphqlQuery = queryFunction(id)
-        {
-            try {
-                const response = await axios.post(apiUrl, { query: graphqlQuery }, config);
-                results.push(response.data);
-                console.log("processing... ", id)
-                // console.log(response?.data)
-                const fileName = `StandardProducts.json`;
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await fs.promises.appendFile(fileName, JSON.stringify(response.data) + '\n');
-            } catch (error) {
-                console.error('Error:', error.response ? error.response.data : error.message);
-            }
-
+    const graphqlQuery = queryFunction()
+    {
+        try {
+            const response = await axios.post(apiUrl, { query: graphqlQuery }, config);
+            results.push(response.data);
+        } catch (error) {
+            console.error('Error:', error.response ? error.response.data : error.message);
         }
-        const fileName = `varientProducts.json`;
-        await fs.promises.writeFile(fileName, JSON.stringify(results, null, 2));
+
     }
+    let products = [];
+    let prodEdgeNodes = results[0].data.variantProducts.edges;
+    for (const edgeData of prodEdgeNodes) {
+        product = new Product();
+        product.name = edgeData.node.name;
+        product.ref = edgeData.node.ref;
+        product.gtinNo = edgeData.node.gtin;
+        if (edgeData.node.categories.edges.length !== 0) {
+            product.categories = [];
+            for (const catRef of edgeData.node.categories.edges) {
+                product.categories.push(catRef.node.ref);
+            }
+        }
+        let attributes = edgeData.node.attributes;
+        if (attributes !== null) {
+            for (const attribute of attributes) {
+                if (attribute.name === 'Brand') product.brandRef = attribute.value;
+                if (attribute.name === 'EAN') product.eanNo = attribute.value;
+                if (attribute.name === 'color') product.colorName = attribute.value;
+                if (attribute.name === 'Size') product.sizeName = attribute.value;
+                if (attribute.name === 'imageUrl') product.image = attribute.value;
+            }
+        }
+        if (edgeData.node.prices.length !== 0) {
+            product.prices = [];
+            for (const attr of edgeData.node.prices) {
+                price = new Price();
+                price.type = attr.type;
+                price.value = attr.value;
+                price.currency = attr.currency;
+                price.catalogRef = edgeData.node.catalogue.ref;
+                product.prices.push(price);
+            }
+        }
+        products.push(product);
+    }
+    const fileName = `products.json`;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await fs.promises.appendFile(fileName, JSON.stringify(products) + '\n');
 }
-function queryFunction(id) {
-    const graphqlQuery = `
-    query{
-        variantProducts(ref : ["${id}"]    
-         catalogue : {    
-             ref : "PC:MASTER:1"    
-         }    
-        ){    
-            edges{    
-                 node{    
-                     ref    
-                     status   
+class Product {
+    ref = '';
+    name = '';
+    gtin = '';
+    categories = [];
+    brand = '';
+    ean = '';
+    color = '';
+    size = '';
+    images = [];
+    prices = [];
+}
+class Price {
+    type = '';
+    currency = '';
+    value = '';
+}
+function queryFunction() {
+    const graphqlQuery = `query {
+        variantProducts(first : 1000  
+        catalogue : {    
+            ref : "PC:MASTER:1"    
+        }
+        status : "ACTIVE"    
+        ) {    
+            edges {    
+                node {    
+                    ref    
+                    name
+                    gtin
+                    categories {
+                        edges {
+                            node {
+                                name
+                            }
+                        }
+                    }
+                    attributes {
+                        name
+                        type
+                        value
+                    }
+                    prices {
+                        currency
+                        type
+                        value
+                    }
+                    catalogue {
+                        ref
+                    }
                  }    
             }    
         }    
-    }
-      `
+    }`
     return graphqlQuery;
 }
 makeGraphqlPostRequest();
